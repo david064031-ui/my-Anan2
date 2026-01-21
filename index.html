@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>คำนวณ TDEE</title>
+
+<style>
+body {
+    font-family: 'Segoe UI', 'Sarabun', sans-serif; /* เพิ่ม Font ไทย */
+    margin:0;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background: linear-gradient(135deg, #fff1d6, #ffd1a3);
+    overflow-x:hidden;
+}
+
+/* พื้นหลังเบลอ */
+body::before, body::after {
+    content:"";
+    position:absolute;
+    border-radius:50%;
+    filter: blur(90px);
+    opacity:0.6;
+    z-index:0;
+}
+body::before {
+    width:240px; height:240px;
+    background:#ffe8b3;
+    top:-60px; left:-60px;
+}
+body::after {
+    width:300px; height:300px;
+    background:#ffcba4;
+    bottom:-80px; right:-60px;
+}
+
+.container {
+    position:relative;
+    z-index:1;
+    background: rgba(255,255,255,0.95);
+    padding:30px;
+    border-radius:20px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.1);
+    width:90%;
+    max-width:400px;
+}
+
+/* --- ปรับปรุงส่วน Advice Box --- */
+.advice-box {
+    background: #fff8f0;
+    border: 1px solid #ffccbc;
+    border-left: 5px solid #ff8a3d;
+    padding: 15px 20px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    color: #444;
+}
+
+.advice-header {
+    font-weight: bold;
+    color: #e65100;
+    margin-bottom: 10px;
+    font-size: 1.1em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.advice-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.advice-list li {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 8px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.advice-list li:last-child {
+    margin-bottom: 0;
+}
+
+.advice-icon {
+    min-width: 24px;
+    margin-right: 8px;
+    font-size: 16px;
+}
+
+.highlight-red { color: #d32f2f; font-weight: 600; }
+.highlight-green { color: #2e7d32; font-weight: 600; }
+.highlight-blue { color: #1565c0; font-weight: 600; }
+
+/* --------------------------- */
+
+h2 {
+    text-align:center;
+    margin-bottom:20px;
+    color:#ff8a3d;
+    font-size: 24px;
+}
+
+label {
+    font-weight: 600;
+    color:#555;
+    font-size: 14px;
+    display: block;
+    margin-top: 12px;
+}
+
+input, select {
+    width:100%;
+    margin-top:5px;
+    padding:12px;
+    border-radius:10px;
+    border:1px solid #eee;
+    background: #fafafa;
+    font-size:15px;
+    box-sizing:border-box;
+    transition: 0.3s;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: #ff8a3d;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(255, 138, 61, 0.1);
+}
+
+button {
+    width: 100%;
+    margin-top: 20px;
+    padding: 14px;
+    border-radius: 10px;
+    background: linear-gradient(135deg,#ffb067,#ff8a3d);
+    color:white;
+    border:none;
+    cursor:pointer;
+    font-weight:bold;
+    font-size: 16px;
+    box-shadow: 0 4px 10px rgba(255, 138, 61, 0.3);
+    transition: transform 0.2s;
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+.result {
+    margin-top:20px;
+    padding: 15px;
+    background: #fff3e0;
+    border-radius: 10px;
+    font-weight:bold;
+    text-align:center;
+    color:#d84315;
+    font-size: 1.2em;
+    display: none; /* ซ่อนไว้ก่อน */
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="advice-box">
+        <div class="advice-header">🔥 คู่มือการปรับรูปร่าง (ฉบับละเอียด)</div>
+        <ul class="advice-list">
+            <li>
+                <div class="advice-icon">⚖️</div>
+                <div class="advice-content">
+                    <span class="highlight-green">รักษาน้ำหนัก (Maintenance)</span>
+                    <div class="main-rule">กินเท่ากับ TDEE</div>
+                    <p class="sub-detail">
+                        เหมาะสำหรับช่วงพักไดเอท น้ำหนักอาจแกว่งขึ้นลง 0.5-1 กก. ถือเป็นเรื่องปกติของน้ำในร่างกาย
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="advice-icon">📉</div>
+                <div class="advice-content">
+                    <span class="highlight-red">ลดไขมัน (Fat Loss)</span>
+                    <div class="main-rule">กินน้อยกว่า TDEE 300 - 500 kcal</div>
+                    <p class="sub-detail">
+                        ต้องทำ <b>Caloric Deficit</b> ระวังอย่าอดอาหารจนต่ำกว่าค่า BMR เพราะจะทำให้โยโย่และกล้ามเนื้อหาย ควรเน้นโปรตีนให้สูงขึ้น
+                    </p>
+                </div>
+            </li>
+
+            <li>
+                <div class="advice-icon">💪</div>
+                <div class="advice-content">
+                    <span class="highlight-blue">เพิ่มกล้ามเนื้อ (Muscle Gain)</span>
+                    <div class="main-rule">กินมากกว่า TDEE 300 - 500 kcal</div>
+                    <p class="sub-detail">
+                        ต้องทำ <b>Caloric Surplus</b> ควบคู่กับ <u>การเล่นเวทเทรนนิ่ง</u> เท่านั้น หากกินเกินแต่ไม่ออกกำลังกาย สิ่งที่เพิ่มมาจะเป็น "ไขมัน" แทน
+                    </p>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <h2>คำนวณค่า TDEE</h2>
+
+    <label>เพศ</label>
+    <select id="gender">
+      <option value="male">ชาย</option>
+      <option value="female">หญิง</option>
+    </select>
+
+    <div style="display:flex; gap:10px;">
+        <div style="flex:1;">
+            <label>อายุ (ปี)</label>
+            <input type="number" id="age" placeholder="25">
+        </div>
+        <div style="flex:1;">
+            <label>น้ำหนัก (กก.)</label>
+            <input type="number" id="weight" placeholder="60">
+        </div>
+    </div>
+
+    <label>ส่วนสูง (ซม.)</label>
+    <input type="number" id="height" placeholder="170">
+
+    <label>ระดับกิจกรรม</label>
+    <select id="activity">
+      <option value="1.2">นั่งทำงาน / ไม่ออกกำลังกาย</option>
+      <option value="1.375">ออกกำลังกายเบา (1-3 วัน/สัปดาห์)</option>
+      <option value="1.55">ออกกำลังกายปานกลาง (3-5 วัน/สัปดาห์)</option>
+      <option value="1.725">ออกหนัก (6-7 วัน/สัปดาห์)</option>
+      <option value="1.9">นักกีฬา / ใช้แรงงานหนัก</option>
+    </select>
+
+    <button onclick="calculateTDEE()">คำนวณพลังงาน</button>
+
+    <div class="result" id="result"></div>
+
+</div>
+
+<script>
+function calculateTDEE() {
+    let gender = document.getElementById("gender").value;
+    let age = Number(document.getElementById("age").value);
+    let weight = Number(document.getElementById("weight").value);
+    let height = Number(document.getElementById("height").value);
+    let activity = Number(document.getElementById("activity").value);
+
+    let resultBox = document.getElementById("result");
+
+    if(!age || !weight || !height){
+        resultBox.style.display = "block";
+        resultBox.style.background = "#ffebee";
+        resultBox.style.color = "#c62828";
+        resultBox.innerHTML = "⚠️ กรุณากรอกข้อมูลให้ครบถ้วน";
+        return;
+    }
+
+    let bmr;
+    if(gender === "male"){
+        bmr = 10*weight + 6.25*height - 5*age + 5;
+    } else {
+        bmr = 10*weight + 6.25*height - 5*age - 161;
+    }
+
+    let tdee = bmr * activity;
+    
+    // Animation เล็กน้อยตอนแสดงผล
+    resultBox.style.display = "none"; 
+    setTimeout(() => {
+        resultBox.style.display = "block";
+        resultBox.style.background = "#fff3e0";
+        resultBox.style.color = "#d84315";
+        resultBox.innerHTML = 
+            "<span style='font-size:0.8em; color:#555;'>ร่างกายคุณใช้พลังงานประมาณ</span><br>" +
+            "<span style='font-size:1.5em;'>" + tdee.toLocaleString('en-US', {maximumFractionDigits: 0}) + "</span> kcal/วัน";
+    }, 100);
+}
+</script>
+
+</body>
+</html>
